@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from "react";
+import { act, useEffect, useReducer } from "react";
 import Header from "./Header";
 import Main from "./Main";
 import Loader from "./Loader";
@@ -23,6 +23,16 @@ function reducer(state, action) {
       return { ...state, status: "error" };
     case "start":
       return { ...state, status: "active" };
+    case "newAnswer":
+      const question = state.questions.at(state.index);
+      return {
+        ...state,
+        answer: action.payload,
+        points:
+          action.payload === question.correctOption
+            ? state.points + question.points
+            : state.points,
+      };
     case "nextQuestion":
       return { ...state, index: state.index + 1 };
     default:
@@ -56,7 +66,11 @@ export default function App() {
         )}
         {status === "active" && (
           <>
-            <Question question={questions[index]} />
+            <Question
+              question={questions[index]}
+              dispatch={dispatch}
+              answer={answer}
+            />
             <NextButton dispatch={dispatch} answer={answer} />{" "}
           </>
         )}
