@@ -64,17 +64,32 @@ function QuizProvider({ children }) {
     dispatch,
   ] = useReducer(reducer, initialState);
 
-  const numQuestions = questions.length;
-  const maxPossiblePoints = questions.reduce(
-    (prev, cur) => prev + cur.points,
-    0
-  );
+  const numQuestions = Array.isArray(questions) ? questions.length : 0;
+  const maxPossiblePoints = Array.isArray(questions)
+    ? questions.reduce((prev, cur) => prev + cur.points, 0)
+    : 0;
 
   useEffect(function () {
-    fetch("http://localhost:8000/questions")
-      .then((res) => res.json())
-      .then((data) => dispatch({ type: "dataReceived", payload: data }))
-      .catch((err) => dispatch({ type: "dataFailed" }));
+    fetch("/questions.json")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data.questions)) {
+          // Перевіряємо, чи data.questions є масивом
+          dispatch({ type: "dataReceived", payload: data.questions });
+        } else {
+          dispatch({ type: "dataFailed" });
+          console.error("Questions data is not an array:", data.questions);
+        }
+      })
+      .catch((err) => {
+        dispatch({ type: "dataFailed" });
+        console.error("Fetch error:", err);
+      });
   }, []);
 
   return (
